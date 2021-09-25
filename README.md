@@ -1,4 +1,10 @@
+# MoneyInputFormatter
+
 A flutter package to format currencies in inputs.
+
+Demo:
+
+![Video demo of typing numbers which are formatted](https://alex-min.fr/videos/money_input_formatter.gif)
 
 ## Features
 
