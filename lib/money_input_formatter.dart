@@ -3,6 +3,8 @@ library money_input_formatter;
 import 'package:flutter/services.dart';
 import 'package:function_tree/function_tree.dart';
 
+class InvalidExpressionException implements Exception {}
+
 extension NumberRounding on double {
   String truncatePrecision(int precision) {
     var res = toString();
@@ -78,12 +80,18 @@ class MoneyInputFormatter extends TextInputFormatter {
       return 0;
     }
 
-    return val
-        .replaceAll(thousandSeparator, '')
-        .replaceFirst(decimalSeparator, '.')
-        .replaceFirst(',', '.')
-        .interpret()
-        .toDouble();
+    late num interpreted;
+    try {
+      interpreted = val
+          .replaceAll(thousandSeparator, '')
+          .replaceFirst(decimalSeparator, '.')
+          .replaceFirst(',', '.')
+          .interpret();
+    } catch (e) {
+      throw InvalidExpressionException();
+    }
+
+    return interpreted.toDouble();
   }
 
   TextEditingValue formatEditUpdateCalculate(
@@ -111,6 +119,8 @@ class MoneyInputFormatter extends TextInputFormatter {
     return value.text.contains('-') ||
         value.text.contains('+') ||
         value.text.contains('(') ||
+        value.text.contains('*') ||
+        value.text.contains('/') ||
         value.text.contains(')');
   }
 
@@ -127,6 +137,11 @@ class MoneyInputFormatter extends TextInputFormatter {
 
     if (containsCalculations(newValue)) {
       return formatEditUpdateCalculate(oldValue, newValue);
+    }
+
+    // too many separators
+    if ('.'.allMatches(newValue.text).length > 1) {
+      return oldValue;
     }
 
     // we deleted a space
