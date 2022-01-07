@@ -240,4 +240,17 @@ void main() async {
     expect(res.selection.baseOffset, 3, reason: 'cursor works as normal');
     expect(res.selection.extentOffset, 3, reason: 'no selection');
   });
+
+  test('removes all spaces from calculations', () {
+    var res = MoneyInputFormatter().formatEditUpdate(
+        const TextEditingValue(
+            text: "1 234",
+            selection: TextSelection(baseOffset: 5, extentOffset: 5)),
+        const TextEditingValue(
+            text: "1 234-",
+            selection: TextSelection(baseOffset: 6, extentOffset: 6)));
+
+    expect(res.text, '1234-', reason: 'no spaces for calculations');
+    expect(res.selection.baseOffset, 5, reason: 'cursor should be at the end');
+  });
 }

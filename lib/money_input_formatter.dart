@@ -87,7 +87,10 @@ class MoneyInputFormatter extends TextInputFormatter {
 
   TextEditingValue formatEditUpdateCalculate(
       TextEditingValue oldValue, TextEditingValue newValue) {
-    var newText = newValue.text.replaceAll('--', '').replaceAll('+-', '-');
+    var newText = newValue.text
+        .replaceAll('--', '')
+        .replaceAll('+-', '-')
+        .replaceAll(' ', '');
     var difference = newText.length - oldValue.text.length;
 
     // no changes
