@@ -3,6 +3,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:money_input_formatter/money_input_formatter.dart';
 
 void main() async {
+  test('truncate precision', () {
+    expect(55.449.truncatePrecision(2), '55.44');
+    expect(55.4.truncatePrecision(2), '55.40');
+    expect(55.4.truncatePrecision(5), '55.40000');
+  });
+
   test('no value should return 0 with the cursor at the end', () {
     var res = MoneyInputFormatter()
         .formatEditUpdate(const TextEditingValue(), const TextEditingValue());
@@ -179,5 +185,47 @@ void main() async {
     expect(res.text, '0.');
     expect(res.selection.baseOffset, 2, reason: 'cursor is still at the end');
     expect(res.selection.extentOffset, 2, reason: 'no selection');
+  });
+
+  // negative tests
+  test('inserts negative ', () {
+    var res = MoneyInputFormatter().formatEditUpdate(
+        const TextEditingValue(
+            text: "5",
+            selection: TextSelection(baseOffset: 0, extentOffset: 0)),
+        const TextEditingValue(
+            text: "-5",
+            selection: TextSelection(baseOffset: 1, extentOffset: 1)));
+
+    expect(res.text, '-5');
+    expect(res.selection.baseOffset, 1,
+        reason: 'cursor next to negative sign as normal');
+    expect(res.selection.extentOffset, 1, reason: 'no selection');
+  });
+
+  test('deletes double negative', () {
+    var res = MoneyInputFormatter().formatEditUpdate(
+        const TextEditingValue(
+            text: "-5",
+            selection: TextSelection(baseOffset: 1, extentOffset: 1)),
+        const TextEditingValue(
+            text: "--5",
+            selection: TextSelection(baseOffset: 2, extentOffset: 2)));
+    expect(res.text, '5');
+    expect(res.selection.baseOffset, 0);
+  });
+
+  test('inserts negative', () {
+    var res = MoneyInputFormatter().formatEditUpdate(
+        const TextEditingValue(
+            text: "1234",
+            selection: TextSelection(baseOffset: 2, extentOffset: 2)),
+        const TextEditingValue(
+            text: "12-34",
+            selection: TextSelection(baseOffset: 3, extentOffset: 3)));
+
+    expect(res.text, '12-34', reason: 'allows the negative sign');
+    expect(res.selection.baseOffset, 3, reason: 'cursor works as normal');
+    expect(res.selection.extentOffset, 1, reason: 'no selection');
   });
 }

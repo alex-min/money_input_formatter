@@ -10,6 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  function_tree: ^0.8.12
 
 dev_dependencies:
   flutter_test:

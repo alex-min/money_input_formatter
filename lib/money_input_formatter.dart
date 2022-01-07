@@ -1,7 +1,7 @@
 library money_input_formatter;
 
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:function_tree/function_tree.dart';
 
 extension NumberRounding on double {
   String truncatePrecision(int precision) {
@@ -10,7 +10,11 @@ extension NumberRounding on double {
     if (decimal == -1) {
       return res;
     }
-    return res.substring(0, decimal + precision + 1);
+    var decimalPosition = decimal + precision + 1;
+    if (decimalPosition >= res.length) {
+      return res + ("0" * (decimalPosition - res.length));
+    }
+    return res.substring(0, decimalPosition);
   }
 }
 
@@ -73,10 +77,25 @@ class MoneyInputFormatter extends TextInputFormatter {
     if (val == "") {
       return 0;
     }
-    return double.parse(val
+    return val
         .replaceAll(thousandSeparator, '')
         .replaceFirst(decimalSeparator, '.')
-        .replaceFirst(',', '.'));
+        .replaceFirst(',', '.')
+        .interpret()
+        .toDouble();
+  }
+
+  TextEditingValue formatEditUpdateCalculate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    var newText = newValue.text.replaceAll('--', '');
+    var difference = newText.length - oldValue.text.length;
+
+    return TextEditingValue(
+      text: newValue.text.replaceAll('--', ''),
+      selection: TextSelection.collapsed(
+          offset: newValue.selection.baseOffset + difference - 1),
+      composing: TextRange.empty,
+    );
   }
 
   @override
@@ -88,6 +107,10 @@ class MoneyInputFormatter extends TextInputFormatter {
         selection: TextSelection.collapsed(offset: 1),
         composing: TextRange.empty,
       );
+    }
+
+    if (newValue.text.contains('-')) {
+      return formatEditUpdateCalculate(oldValue, newValue);
     }
 
     // we deleted a space
@@ -103,6 +126,7 @@ class MoneyInputFormatter extends TextInputFormatter {
           selection: TextSelection.collapsed(
               offset: oldValue.selection.baseOffset - 2));
     }
+
     String masked = applyMask(numberValue(newValue.text));
 
     // no changes
