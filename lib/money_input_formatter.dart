@@ -77,6 +77,7 @@ class MoneyInputFormatter extends TextInputFormatter {
     if (val == "") {
       return 0;
     }
+
     return val
         .replaceAll(thousandSeparator, '')
         .replaceFirst(decimalSeparator, '.')
@@ -106,6 +107,10 @@ class MoneyInputFormatter extends TextInputFormatter {
     );
   }
 
+  bool containsCalculations(TextEditingValue value) {
+    return value.text.contains('-') || value.text.contains('+');
+  }
+
   @override
   TextEditingValue formatEditUpdate(
       TextEditingValue oldValue, TextEditingValue newValue) {
@@ -117,7 +122,7 @@ class MoneyInputFormatter extends TextInputFormatter {
       );
     }
 
-    if (newValue.text.contains('-')) {
+    if (containsCalculations(newValue)) {
       return formatEditUpdateCalculate(oldValue, newValue);
     }
 

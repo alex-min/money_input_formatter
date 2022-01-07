@@ -253,4 +253,18 @@ void main() async {
     expect(res.text, '1234-', reason: 'no spaces for calculations');
     expect(res.selection.baseOffset, 5, reason: 'cursor should be at the end');
   });
+
+  test('inserts a plus sign when typing', () {
+    var res = MoneyInputFormatter().formatEditUpdate(
+        const TextEditingValue(
+            text: "1 234",
+            selection: TextSelection(baseOffset: 5, extentOffset: 5)),
+        const TextEditingValue(
+            text: "1 234+",
+            selection: TextSelection(baseOffset: 6, extentOffset: 6)));
+
+    expect(res.text, '1234+',
+        reason: 'plus is inserted normally and spaces deleted');
+    expect(res.selection.baseOffset, 5, reason: 'cursor should be at the end');
+  });
 }
