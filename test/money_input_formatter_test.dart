@@ -215,6 +215,18 @@ void main() async {
     expect(res.selection.baseOffset, 0);
   });
 
+  test('deletes useless plus', () {
+    var res = MoneyInputFormatter().formatEditUpdate(
+        const TextEditingValue(
+            text: "-5",
+            selection: TextSelection(baseOffset: 1, extentOffset: 1)),
+        const TextEditingValue(
+            text: "+-5",
+            selection: TextSelection(baseOffset: 2, extentOffset: 2)));
+    expect(res.text, '-5');
+    expect(res.selection.baseOffset, 1);
+  });
+
   test('inserts negative', () {
     var res = MoneyInputFormatter().formatEditUpdate(
         const TextEditingValue(
@@ -226,6 +238,6 @@ void main() async {
 
     expect(res.text, '12-34', reason: 'allows the negative sign');
     expect(res.selection.baseOffset, 3, reason: 'cursor works as normal');
-    expect(res.selection.extentOffset, 1, reason: 'no selection');
+    expect(res.selection.extentOffset, 3, reason: 'no selection');
   });
 }
