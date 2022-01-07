@@ -108,7 +108,10 @@ class MoneyInputFormatter extends TextInputFormatter {
   }
 
   bool containsCalculations(TextEditingValue value) {
-    return value.text.contains('-') || value.text.contains('+');
+    return value.text.contains('-') ||
+        value.text.contains('+') ||
+        value.text.contains('(') ||
+        value.text.contains(')');
   }
 
   @override
