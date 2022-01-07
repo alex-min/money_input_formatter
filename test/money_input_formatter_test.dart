@@ -269,16 +269,16 @@ void main() async {
   });
 
   test('adding a second digit separator', () {
-    var text = MoneyInputFormatter(decimalSeparator: '.');
+    var text = MoneyInputFormatter(decimalSeparator: ',');
     var res = text.formatEditUpdate(
         const TextEditingValue(
-            text: "11.1",
+            text: "11,1",
             selection: TextSelection(baseOffset: 4, extentOffset: 4)),
         const TextEditingValue(
-            text: "11.1.",
+            text: "11,1,",
             selection: TextSelection(baseOffset: 5, extentOffset: 5)));
 
-    expect(res.text, '11.1', reason: 'did not change');
+    expect(res.text, '11,1', reason: 'did not change');
     expect(res.selection.baseOffset, 4, reason: 'cursor should be at the end');
   });
 }

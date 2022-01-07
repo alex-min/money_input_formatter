@@ -140,7 +140,7 @@ class MoneyInputFormatter extends TextInputFormatter {
     }
 
     // too many separators
-    if ('.'.allMatches(newValue.text).length > 1) {
+    if (decimalSeparator.allMatches(newValue.text).length > 1) {
       return oldValue;
     }
 
