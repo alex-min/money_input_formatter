@@ -9,18 +9,20 @@ void main() async {
     expect(55.4.truncatePrecision(5), '55.40000');
   });
 
-  test('no value should return 0 with the cursor at the end', () {
+  test('no value should nothing with the cursor at the end', () {
     var res = MoneyInputFormatter()
         .formatEditUpdate(const TextEditingValue(), const TextEditingValue());
-    expect(res.text, '0');
-    expect(res.selection.baseOffset, 1, reason: 'cursor is at the end');
-    expect(res.selection.extentOffset, 1, reason: 'no selection');
+    expect(res.text, '');
+    expect(res.selection.baseOffset, 0, reason: 'cursor is at the end');
+    expect(res.selection.extentOffset, 0, reason: 'no selection');
+  });
 
-    res = MoneyInputFormatter().formatEditUpdate(
+  test('deleting zero works', () {
+    var res = MoneyInputFormatter().formatEditUpdate(
         const TextEditingValue(text: "0"), const TextEditingValue());
-    expect(res.text, '0');
-    expect(res.selection.baseOffset, 1, reason: 'cursor is at the end');
-    expect(res.selection.extentOffset, 1, reason: 'no selection');
+    expect(res.text, '');
+    expect(res.selection.baseOffset, 0, reason: 'cursor is at the end');
+    expect(res.selection.extentOffset, 0, reason: 'no selection');
   });
 
   test('deleting a space reformats the input: 123 |456 => 12| 456', () {

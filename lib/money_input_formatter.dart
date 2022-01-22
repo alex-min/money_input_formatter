@@ -127,7 +127,14 @@ class MoneyInputFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
       TextEditingValue oldValue, TextEditingValue newValue) {
-    if (newValue.text == "0" || newValue.text == '') {
+    if (newValue.text == "") {
+      return const TextEditingValue(
+        text: "",
+        selection: TextSelection.collapsed(offset: 0),
+        composing: TextRange.empty,
+      );
+    }
+    if (newValue.text == "0") {
       return const TextEditingValue(
         text: "0",
         selection: TextSelection.collapsed(offset: 1),
