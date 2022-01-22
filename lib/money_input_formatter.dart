@@ -1,7 +1,9 @@
 library money_input_formatter;
 
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:function_tree/function_tree.dart';
+
+class InvalidExpressionException implements Exception {}
 
 extension NumberRounding on double {
   String truncatePrecision(int precision) {
@@ -10,7 +12,11 @@ extension NumberRounding on double {
     if (decimal == -1) {
       return res;
     }
-    return res.substring(0, decimal + precision + 1);
+    var decimalPosition = decimal + precision + 1;
+    if (decimalPosition >= res.length) {
+      return res + ("0" * (decimalPosition - res.length));
+    }
+    return res.substring(0, decimalPosition);
   }
 }
 
@@ -73,21 +79,76 @@ class MoneyInputFormatter extends TextInputFormatter {
     if (val == "") {
       return 0;
     }
-    return double.parse(val
-        .replaceAll(thousandSeparator, '')
-        .replaceFirst(decimalSeparator, '.')
-        .replaceFirst(',', '.'));
+
+    late num interpreted;
+    try {
+      interpreted = val
+          .replaceAll(thousandSeparator, '')
+          .replaceFirst(decimalSeparator, '.')
+          .replaceFirst(',', '.')
+          .interpret();
+    } catch (e) {
+      throw InvalidExpressionException();
+    }
+
+    return interpreted.toDouble();
+  }
+
+  TextEditingValue formatEditUpdateCalculate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    var newText = newValue.text
+        .replaceAll('--', '')
+        .replaceAll('+-', '-')
+        .replaceAll(' ', '');
+    var difference = newText.length - oldValue.text.length;
+
+    // no changes
+    if (newText == newValue.text) {
+      return newValue;
+    }
+
+    return TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(
+          offset: newValue.selection.baseOffset + difference - 1),
+      composing: TextRange.empty,
+    );
+  }
+
+  bool containsCalculations(TextEditingValue value) {
+    return value.text.contains('-') ||
+        value.text.contains('+') ||
+        value.text.contains('(') ||
+        value.text.contains('*') ||
+        value.text.contains('/') ||
+        value.text.contains(')');
   }
 
   @override
   TextEditingValue formatEditUpdate(
       TextEditingValue oldValue, TextEditingValue newValue) {
-    if (newValue.text == "0" || newValue.text == '') {
+    if (newValue.text == "") {
+      return const TextEditingValue(
+        text: "",
+        selection: TextSelection.collapsed(offset: 0),
+        composing: TextRange.empty,
+      );
+    }
+    if (newValue.text == "0") {
       return const TextEditingValue(
         text: "0",
         selection: TextSelection.collapsed(offset: 1),
         composing: TextRange.empty,
       );
+    }
+
+    if (containsCalculations(newValue)) {
+      return formatEditUpdateCalculate(oldValue, newValue);
+    }
+
+    // too many separators
+    if (decimalSeparator.allMatches(newValue.text).length > 1) {
+      return oldValue;
     }
 
     // we deleted a space
@@ -103,6 +164,7 @@ class MoneyInputFormatter extends TextInputFormatter {
           selection: TextSelection.collapsed(
               offset: oldValue.selection.baseOffset - 2));
     }
+
     String masked = applyMask(numberValue(newValue.text));
 
     // no changes

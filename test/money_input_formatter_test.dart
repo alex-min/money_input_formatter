@@ -3,18 +3,26 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:money_input_formatter/money_input_formatter.dart';
 
 void main() async {
-  test('no value should return 0 with the cursor at the end', () {
+  test('truncate precision', () {
+    expect(55.449.truncatePrecision(2), '55.44');
+    expect(55.4.truncatePrecision(2), '55.40');
+    expect(55.4.truncatePrecision(5), '55.40000');
+  });
+
+  test('no value should nothing with the cursor at the end', () {
     var res = MoneyInputFormatter()
         .formatEditUpdate(const TextEditingValue(), const TextEditingValue());
-    expect(res.text, '0');
-    expect(res.selection.baseOffset, 1, reason: 'cursor is at the end');
-    expect(res.selection.extentOffset, 1, reason: 'no selection');
+    expect(res.text, '');
+    expect(res.selection.baseOffset, 0, reason: 'cursor is at the end');
+    expect(res.selection.extentOffset, 0, reason: 'no selection');
+  });
 
-    res = MoneyInputFormatter().formatEditUpdate(
+  test('deleting zero works', () {
+    var res = MoneyInputFormatter().formatEditUpdate(
         const TextEditingValue(text: "0"), const TextEditingValue());
-    expect(res.text, '0');
-    expect(res.selection.baseOffset, 1, reason: 'cursor is at the end');
-    expect(res.selection.extentOffset, 1, reason: 'no selection');
+    expect(res.text, '');
+    expect(res.selection.baseOffset, 0, reason: 'cursor is at the end');
+    expect(res.selection.extentOffset, 0, reason: 'no selection');
   });
 
   test('deleting a space reformats the input: 123 |456 => 12| 456', () {
@@ -179,5 +187,100 @@ void main() async {
     expect(res.text, '0.');
     expect(res.selection.baseOffset, 2, reason: 'cursor is still at the end');
     expect(res.selection.extentOffset, 2, reason: 'no selection');
+  });
+
+  // negative tests
+  test('inserts negative ', () {
+    var res = MoneyInputFormatter().formatEditUpdate(
+        const TextEditingValue(
+            text: "5",
+            selection: TextSelection(baseOffset: 0, extentOffset: 0)),
+        const TextEditingValue(
+            text: "-5",
+            selection: TextSelection(baseOffset: 1, extentOffset: 1)));
+
+    expect(res.text, '-5');
+    expect(res.selection.baseOffset, 1,
+        reason: 'cursor next to negative sign as normal');
+    expect(res.selection.extentOffset, 1, reason: 'no selection');
+  });
+
+  test('deletes double negative', () {
+    var res = MoneyInputFormatter().formatEditUpdate(
+        const TextEditingValue(
+            text: "-5",
+            selection: TextSelection(baseOffset: 1, extentOffset: 1)),
+        const TextEditingValue(
+            text: "--5",
+            selection: TextSelection(baseOffset: 2, extentOffset: 2)));
+    expect(res.text, '5');
+    expect(res.selection.baseOffset, 0);
+  });
+
+  test('deletes useless plus', () {
+    var res = MoneyInputFormatter().formatEditUpdate(
+        const TextEditingValue(
+            text: "-5",
+            selection: TextSelection(baseOffset: 1, extentOffset: 1)),
+        const TextEditingValue(
+            text: "+-5",
+            selection: TextSelection(baseOffset: 2, extentOffset: 2)));
+    expect(res.text, '-5');
+    expect(res.selection.baseOffset, 1);
+  });
+
+  test('inserts negative', () {
+    var res = MoneyInputFormatter().formatEditUpdate(
+        const TextEditingValue(
+            text: "1234",
+            selection: TextSelection(baseOffset: 2, extentOffset: 2)),
+        const TextEditingValue(
+            text: "12-34",
+            selection: TextSelection(baseOffset: 3, extentOffset: 3)));
+
+    expect(res.text, '12-34', reason: 'allows the negative sign');
+    expect(res.selection.baseOffset, 3, reason: 'cursor works as normal');
+    expect(res.selection.extentOffset, 3, reason: 'no selection');
+  });
+
+  test('removes all spaces from calculations', () {
+    var res = MoneyInputFormatter().formatEditUpdate(
+        const TextEditingValue(
+            text: "1 234",
+            selection: TextSelection(baseOffset: 5, extentOffset: 5)),
+        const TextEditingValue(
+            text: "1 234-",
+            selection: TextSelection(baseOffset: 6, extentOffset: 6)));
+
+    expect(res.text, '1234-', reason: 'no spaces for calculations');
+    expect(res.selection.baseOffset, 5, reason: 'cursor should be at the end');
+  });
+
+  test('inserts a plus sign when typing', () {
+    var res = MoneyInputFormatter().formatEditUpdate(
+        const TextEditingValue(
+            text: "1 234",
+            selection: TextSelection(baseOffset: 5, extentOffset: 5)),
+        const TextEditingValue(
+            text: "1 234+",
+            selection: TextSelection(baseOffset: 6, extentOffset: 6)));
+
+    expect(res.text, '1234+',
+        reason: 'plus is inserted normally and spaces deleted');
+    expect(res.selection.baseOffset, 5, reason: 'cursor should be at the end');
+  });
+
+  test('adding a second digit separator', () {
+    var text = MoneyInputFormatter(decimalSeparator: ',');
+    var res = text.formatEditUpdate(
+        const TextEditingValue(
+            text: "11,1",
+            selection: TextSelection(baseOffset: 4, extentOffset: 4)),
+        const TextEditingValue(
+            text: "11,1,",
+            selection: TextSelection(baseOffset: 5, extentOffset: 5)));
+
+    expect(res.text, '11,1', reason: 'did not change');
+    expect(res.selection.baseOffset, 4, reason: 'cursor should be at the end');
   });
 }
